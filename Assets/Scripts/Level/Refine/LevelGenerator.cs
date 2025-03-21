@@ -1,7 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using UnityEngine.Tilemaps; // Added for TileBase references
-
 public class LevelGenerator : MonoBehaviour
 {
     [SerializeField] private LevelSettings settings;

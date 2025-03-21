@@ -1,6 +1,5 @@
 using UnityEngine;
 using Cinemachine;
-
 public class EntitySpawner : MonoBehaviour
 {
     private GameObject playerInstance;
