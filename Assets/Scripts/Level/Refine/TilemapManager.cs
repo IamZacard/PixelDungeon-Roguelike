@@ -3,9 +3,9 @@ using UnityEngine.Tilemaps;
 
 public class TilemapManager : MonoBehaviour
 {
-    public Tilemap groundTilemap { get; private set; }
-    public Tilemap wallTilemap { get; private set; }
-    public Tilemap encountersTilemap { get; private set; }
+    [SerializeField] public Tilemap groundTilemap { get; private set; }
+    [SerializeField] public Tilemap wallTilemap { get; private set; }
+    [SerializeField] public Tilemap encountersTilemap { get; private set; }
 
     public void AssignTilemapsDynamically()
     {
