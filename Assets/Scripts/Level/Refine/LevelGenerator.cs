@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+
 public class LevelGenerator : MonoBehaviour
 {
     [SerializeField] private LevelSettings settings;
