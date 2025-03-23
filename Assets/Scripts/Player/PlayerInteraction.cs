@@ -26,7 +26,7 @@ public class PlayerInteraction : MonoBehaviour
         if (levelGenerator != null)
         {
             // Access LevelSettings through reflection or a public method (we'll add a getter to LevelGenerator)
-            levelSettings = levelGenerator.GetLevelSettings();
+            //levelSettings = levelGenerator.GetLevelSettings();
         }
 
         // Find TilemapManager to get the encountersTilemap

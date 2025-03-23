@@ -8,43 +8,20 @@ public class GridGenerator : MonoBehaviour
 
     public char[,] GenerateGrid(LevelSettings settings)
     {
-        grid = new char[settings.gridHeight, settings.gridWidth];
+        char[,] grid = new char[settings.gridWidth, settings.gridHeight];
+
+        // Simple example: Fill with floors and add walls on borders
         for (int y = 0; y < settings.gridHeight; y++)
+        {
             for (int x = 0; x < settings.gridWidth; x++)
-                grid[y, x] = ' '; // Empty space
-
-        // Generate rooms
-        for (int i = 0; i < settings.numRooms; i++)
-        {
-            Vector2Int minSize = i < 2 ? settings.smallRoomMinSize : settings.largeRoomMinSize;
-            Vector2Int maxSize = i < 2 ? settings.smallRoomMaxSize : settings.largeRoomMaxSize;
-            int width = Random.Range(minSize.x, maxSize.x + 1);
-            int height = Random.Range(minSize.y, maxSize.y + 1);
-            int x = Random.Range(1, settings.gridWidth - width - 1);
-            int y = Random.Range(1, settings.gridHeight - height - 1);
-
-            RectInt newRoom = new RectInt(x, y, width, height);
-            if (!DoesRoomOverlap(newRoom))
             {
-                rooms.Add(newRoom);
-                CarveRoom(newRoom);
-            }
-            else
-            {
-                i--;
+                if (x == 0 || x == settings.gridWidth - 1 || y == 0 || y == settings.gridHeight - 1)
+                    grid[x, y] = '#'; // Wall
+                else
+                    grid[x, y] = '.'; // Floor
             }
         }
-
-        // Connect rooms with corridors
-        for (int i = 1; i < rooms.Count; i++)
-        {
-            ConnectRooms(rooms[i - 1], rooms[i]);
-        }
-
-        ConnectStartingPoint(rooms[0]);
-        PlaceSpecialTiles();
-        PlaceWallsAroundFloors();
-
+        grid[2, 2] = 'P'; // Player spawn point
         return grid;
     }
 

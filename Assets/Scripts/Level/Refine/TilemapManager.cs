@@ -3,9 +3,9 @@ using UnityEngine.Tilemaps;
 
 public class TilemapManager : MonoBehaviour
 {
-    [SerializeField] public Tilemap groundTilemap { get; private set; }
-    [SerializeField] public Tilemap wallTilemap { get; private set; }
-    [SerializeField] public Tilemap encountersTilemap { get; private set; }
+    public Tilemap groundTilemap { get; private set; }
+    public Tilemap wallTilemap { get; private set; }
+    public Tilemap encountersTilemap { get; private set; }
 
     public void AssignTilemapsDynamically()
     {
@@ -42,41 +42,24 @@ public class TilemapManager : MonoBehaviour
 
     public void ClearTilemaps()
     {
-        Debug.Log("TilemapManager: Clearing Tilemaps...");
-        if (groundTilemap != null) groundTilemap.ClearAllTiles();
-        if (wallTilemap != null) wallTilemap.ClearAllTiles();
-        if (encountersTilemap != null) encountersTilemap.ClearAllTiles();
-        Debug.Log("Tilemaps cleared.");
+        groundTilemap.ClearAllTiles();
+        wallTilemap.ClearAllTiles();
     }
 
     public void SetTiles(char[,] grid, LevelSettings settings)
     {
-        if (groundTilemap == null || wallTilemap == null || encountersTilemap == null)
+        for (int y = 0; y < settings.gridHeight; y++)
         {
-            Debug.LogError("TilemapManager: Cannot set tiles: Tilemaps missing!");
-            return;
-        }
-
-        for (int y = 0; y < grid.GetLength(0); y++)
-        {
-            for (int x = 0; x < grid.GetLength(1); x++)
+            for (int x = 0; x < settings.gridWidth; x++)
             {
                 Vector3Int pos = new Vector3Int(x, y, 0);
-                if (grid[y, x] == '#')
-                {
-                    wallTilemap.SetTile(pos, settings.wallTile);
-                }
-                else if (grid[y, x] == '.' || grid[y, x] == 'E' || grid[y, x] == 'T' || grid[y, x] == 'N' || grid[y, x] == 'C' || grid[y, x] == 'P')
+                if (grid[x, y] == '.') // Floor
                 {
                     groundTilemap.SetTile(pos, settings.groundTile);
-                    if (grid[y, x] == 'E')
-                        encountersTilemap.SetTile(pos, settings.escapeTile);
-                    else if (grid[y, x] == 'T')
-                        encountersTilemap.SetTile(pos, settings.trapTile);
-                    else if (grid[y, x] == 'C')
-                        encountersTilemap.SetTile(pos, settings.coinTile);
-                    else if (grid[y, x] == 'P')
-                        encountersTilemap.SetTile(pos, settings.potionTile);
+                }
+                else if (grid[x, y] == '#') // Wall
+                {
+                    wallTilemap.SetTile(pos, settings.wallTile);
                 }
             }
         }

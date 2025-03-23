@@ -1,150 +1,51 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
+using Cinemachine;
+
 public class LevelGenerator : MonoBehaviour
 {
-    [SerializeField] private LevelSettings settings;
-    [SerializeField] private TilemapManager tilemapManager;
-    [SerializeField] private GridGenerator gridGenerator;
-    [SerializeField] private EntitySpawner entitySpawner;
+    [Header("Assigned in Inspector")]
+    [SerializeField] private LevelSettings settings;          // Level configuration (e.g., size, tile types)
+    [SerializeField] private TilemapManager tilemapManager;   // Handles tile placement
+    [SerializeField] private GridGenerator gridGenerator;     // Generates the grid layout
+    [SerializeField] private EntitySpawner entitySpawner;     // Spawns entities like the player
+    [SerializeField] private CinemachineVirtualCamera virtualCamera; // Camera to follow the player
 
-    private bool canProceed = true;
-
-    public LevelSettings GetLevelSettings()
+    private void OnEnable()
     {
-        return settings;
+        // Subscribe to scene load events
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void Awake()
+    private void OnDisable()
     {
-        Debug.Log("LevelGenerator: Awake called.");
-        ValidateComponents();
-
-        if (!canProceed)
-        {
-            Debug.LogError("LevelGenerator: Cannot proceed due to missing components. Check errors above.");
-            enabled = false;
-            return;
-        }
-
-        if (!entitySpawner.AssignVirtualCameraDynamically())
-        {
-            Debug.LogError("LevelGenerator: Failed to assign CinemachineVirtualCamera.");
-            canProceed = false;
-        }
-
-        ValidateSettings();
+        // Unsubscribe to avoid memory leaks
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    void Start()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log("LevelGenerator: Start called.");
-        if (canProceed)
-        {
-            StartCoroutine(InitializeLevel());
-        }
-        else
-        {
-            Debug.LogError("LevelGenerator: Start skipped due to missing references or components.");
-        }
+        // Start level generation after scene is fully loaded
+        StartCoroutine(InitializeLevel());
     }
 
     private IEnumerator InitializeLevel()
     {
-        Debug.Log("LevelGenerator: Initializing level...");
-        yield return new WaitForEndOfFrame();
+        // Wait one frame to ensure all objects are active
+        yield return null;
 
-        tilemapManager.AssignTilemapsDynamically();
+        // Clear previous level data
+        entitySpawner.ClearEntities();
         tilemapManager.ClearTilemaps();
 
+        // Generate the grid
         char[,] grid = gridGenerator.GenerateGrid(settings);
+
+        // Place tiles based on the grid
         tilemapManager.SetTiles(grid, settings);
-        entitySpawner.SpawnEntities(grid, settings);
-    }
 
-    private void ValidateComponents()
-    {
-        Debug.Log("LevelGenerator: Validating components...");
-        canProceed = true;
-
-        if (settings == null)
-        {
-            Debug.LogError("LevelGenerator: LevelSettings not assigned!");
-            canProceed = false;
-        }
-        if (tilemapManager == null)
-        {
-            Debug.LogError("LevelGenerator: TilemapManager not assigned!");
-            canProceed = false;
-        }
-        if (gridGenerator == null)
-        {
-            Debug.LogError("LevelGenerator: GridGenerator not assigned!");
-            canProceed = false;
-        }
-        if (entitySpawner == null)
-        {
-            Debug.LogError("LevelGenerator: EntitySpawner not assigned!");
-            canProceed = false;
-        }
-
-        if (canProceed)
-        {
-            Debug.Log("LevelGenerator: All components validated successfully.");
-        }
-    }
-
-    private void ValidateSettings()
-    {
-        Debug.Log("LevelGenerator: Validating settings...");
-        if (settings.groundTile == null)
-        {
-            Debug.LogError("LevelGenerator: groundTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.wallTile == null)
-        {
-            Debug.LogError("LevelGenerator: wallTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.escapeTile == null)
-        {
-            Debug.LogError("LevelGenerator: escapeTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.trapTile == null)
-        {
-            Debug.LogError("LevelGenerator: trapTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.enemyTile == null)
-        {
-            Debug.LogError("LevelGenerator: enemyTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.coinTile == null)
-        {
-            Debug.LogError("LevelGenerator: coinTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.potionTile == null)
-        {
-            Debug.LogError("LevelGenerator: potionTile not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.playerPrefab == null)
-        {
-            Debug.LogError("LevelGenerator: playerPrefab not assigned in LevelSettings!");
-            canProceed = false;
-        }
-        if (settings.enemyPrefab == null)
-        {
-            Debug.LogError("LevelGenerator: enemyPrefab not assigned in LevelSettings!");
-            canProceed = false;
-        }
-
-        if (canProceed)
-        {
-            Debug.Log("LevelGenerator: All settings validated successfully.");
-        }
+        // Spawn entities and pass the camera reference
+        entitySpawner.SpawnEntities(grid, settings, virtualCamera);
     }
 }

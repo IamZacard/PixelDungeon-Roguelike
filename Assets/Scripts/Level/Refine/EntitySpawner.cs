@@ -22,59 +22,37 @@ public class EntitySpawner : MonoBehaviour
 
     public void ClearEntities()
     {
-        Debug.Log($"EntitySpawner: Clearing {spawnedEntities.Count} entities...");
+        // Destroy all spawned entities
         foreach (GameObject entity in spawnedEntities)
         {
             if (entity != null)
             {
-                Debug.Log($"EntitySpawner: Destroying entity {entity.name}");
                 Destroy(entity);
             }
         }
         spawnedEntities.Clear();
-        playerInstance = null;
-        Debug.Log("EntitySpawner: Entities cleared.");
     }
 
-    public void SpawnEntities(char[,] grid, LevelSettings settings)
+    public void SpawnEntities(char[,] grid, LevelSettings settings, CinemachineVirtualCamera virtualCamera)
     {
-        Debug.Log("EntitySpawner: Spawning entities...");
-        Vector3? playerSpawnPosition = null;
-
-        for (int y = 0; y < grid.GetLength(0); y++)
+        // Example: Spawn a player at a specific grid position
+        for (int y = 0; y < settings.gridHeight; y++)
         {
-            for (int x = 0; x < grid.GetLength(1); x++)
+            for (int x = 0; x < settings.gridWidth; x++)
             {
-                Vector3 worldPos = new Vector3(x + 0.5f, y + 0.5f, 0);
-                if (grid[y, x] == 'N')
+                if (grid[x, y] == 'P') // 'P' marks player spawn point
                 {
-                    if (settings.enemyPrefab != null)
+                    GameObject player = Instantiate(settings.playerPrefab, new Vector3(x, y, 0), Quaternion.identity);
+                    spawnedEntities.Add(player);
+
+                    // Set the camera to follow the player
+                    if (virtualCamera != null)
                     {
-                        GameObject enemy = Instantiate(settings.enemyPrefab, worldPos, Quaternion.identity);
-                        spawnedEntities.Add(enemy);
-                        Debug.Log($"EntitySpawner: Spawned enemy at {worldPos}");
+                        virtualCamera.Follow = player.transform;
                     }
-                    else
-                    {
-                        Debug.LogError("EntitySpawner: Enemy prefab not assigned!");
-                    }
-                }
-                else if (grid[y, x] == 'P')
-                {
-                    playerSpawnPosition = worldPos;
-                    Debug.Log($"EntitySpawner: Found player spawn position at {worldPos}");
+                    return; // Exit after spawning the player
                 }
             }
-        }
-
-        if (playerSpawnPosition.HasValue)
-        {
-            SpawnPlayer(settings, playerSpawnPosition.Value);
-        }
-        else
-        {
-            Debug.LogWarning("EntitySpawner: No player spawn position ('P') found in the grid! Spawning at default position.");
-            SpawnPlayer(settings, new Vector3(1.5f, 1.5f, 0));
         }
     }
 
