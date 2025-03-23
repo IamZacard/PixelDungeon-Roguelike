@@ -131,9 +131,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 210685115}
-  - component: {fileID: 210685114}
-  - component: {fileID: 210685116}
+  - component: {fileID: 210685120}
+  - component: {fileID: 210685119}
+  - component: {fileID: 210685118}
   - component: {fileID: 210685117}
+  - component: {fileID: 210685116}
   m_Layer: 0
   m_Name: LevelManager
   m_TagString: Untagged
@@ -141,38 +143,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &210685114
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210685113}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc2b46e5ed19a57429f10dcdc50d5195, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridWidth: 25
-  gridHeight: 25
-  numRooms: 5
-  smallRoomMinSize: {x: 3, y: 3}
-  smallRoomMaxSize: {x: 5, y: 5}
-  largeRoomMinSize: {x: 6, y: 6}
-  largeRoomMaxSize: {x: 10, y: 10}
-  groundTilemap: {fileID: 663829861}
-  wallTilemap: {fileID: 1483402807}
-  encountersTilemap: {fileID: 613794794}
-  groundTile: {fileID: 11400000, guid: ba2eaa343cca0d34f8794e00cdcd3c18, type: 2}
-  wallTile: {fileID: 11400000, guid: fd3ba834d472e644483cec3763a9f2da, type: 2}
-  escapeTile: {fileID: 11400000, guid: 20ecd38649464df4eb2f66d96e911f1b, type: 2}
-  trapTile: {fileID: 11400000, guid: 9f8b88ad189adb2408d9659e8b818941, type: 2}
-  enemyTile: {fileID: 11400000, guid: 6b77e6a1768ed2849bc18f4117ac1dd6, type: 2}
-  coinTile: {fileID: 11400000, guid: 5d4fac58e3f1c3246b11d0c30f58de61, type: 2}
-  potionTile: {fileID: 11400000, guid: ff23277ea3d0cfe4c901b85e7955380c, type: 2}
-  playerPrefab: {fileID: 9094627802003585634, guid: 7eb2a72f8001b854ea594de96695fe83, type: 3}
-  enemyPrefab: {fileID: 9094627802003585634, guid: 19eea4cb81e5be542b198a02e4170fb7, type: 3}
-  virtualCamera: {fileID: 1787311288}
 --- !u!4 &210685115
 Transform:
   m_ObjectHideFlags: 0
@@ -197,7 +167,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d74a5f890e89ae4a88b779494640dba, type: 3}
+  m_Script: {fileID: 11500000, guid: 09d827bb436ac3c48ac1c8ceddbfad58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &210685117
@@ -209,9 +179,53 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3325a8390597a77418a681b96cdda986, type: 3}
+  m_Script: {fileID: 11500000, guid: d7ab4be0bd4552848bb4dc958d6bef04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  groundTilemap: {fileID: 0}
+  wallTilemap: {fileID: 0}
+--- !u!114 &210685118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210685113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ec9563a6190ae542b3156d4281f95ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settings: {fileID: 11400000, guid: d6b0bc6ccbce1a345842fbdca4b4d3e5, type: 2}
+--- !u!114 &210685119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210685113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8024a708031b72f41b948174364b897e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &210685120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210685113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee363403f454dbf4b98c4da4d6e475d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settings: {fileID: 11400000, guid: d6b0bc6ccbce1a345842fbdca4b4d3e5, type: 2}
+  tilemapManager: {fileID: 0}
+  gridGenerator: {fileID: 0}
+  entitySpawner: {fileID: 0}
+  virtualCamera: {fileID: 0}
 --- !u!1 &278518040
 GameObject:
   m_ObjectHideFlags: 0

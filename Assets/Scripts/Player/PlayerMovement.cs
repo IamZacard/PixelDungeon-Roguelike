@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private GameObject attackParticleEffect; // Particle effect for attacking
     private Vector2 targetPosition;
     private bool isMoving = false;
     private bool justFinishedMoving = false;
@@ -43,15 +45,17 @@ public class PlayerMovement : MonoBehaviour
             {
                 int damage = Mathf.Max(controller.playerHealth.GetAttack() - enemy.GetDefense(), 0);
                 enemy.TakeDamage(damage);
+                PlayAttackParticleEffect(newPos); // Play particle effect at enemy's position                               
+
                 if (enemy.GetHealth() <= 0)
                 {
-                    targetPosition = newPos;
+                    targetPosition = newPos; // Move into enemy's position if killed
                     isMoving = true;
                     justFinishedMoving = false;
                 }
                 else
                 {
-                    justFinishedMoving = true;
+                    justFinishedMoving = true; // Stay put if enemy survives
                 }
             }
         }
@@ -64,6 +68,22 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             justFinishedMoving = true;
+        }
+    }
+
+    public void SkipMove() // For F key
+    {
+        Debug.Log("Player skipped move (F pressed)");
+        justFinishedMoving = true; // Trigger turn end without moving
+    }
+
+    private void PlayAttackParticleEffect(Vector2 enemyPos)
+    {
+        if (attackParticleEffect != null)
+        {
+            attackParticleEffect.transform.position = enemyPos; // Set position to enemy's location
+            Instantiate(attackParticleEffect, enemyPos, Quaternion.identity);
+            Debug.Log($"Attack particle effect played at {enemyPos}");
         }
     }
 
@@ -88,7 +108,7 @@ public class PlayerMovement : MonoBehaviour
     public bool IsTileWalkable(Vector2 pos)
     {
         Collider2D hit = Physics2D.OverlapPoint(pos, LayerMask.GetMask("Default"));
-        bool walkable = !(hit != null && hit.CompareTag("Wall")); // Only check walls
+        bool walkable = !(hit != null && hit.CompareTag("Wall"));
         Debug.Log($"Checking walkable at {pos}: {walkable}, Hit: {(hit != null ? hit.name : "None")}");
         return walkable;
     }

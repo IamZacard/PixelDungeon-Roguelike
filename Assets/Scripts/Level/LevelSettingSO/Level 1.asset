@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 765945c2ce31b614c85fd902ce85c6fc, type: 3}
+  m_Name: Level 1
+  m_EditorClassIdentifier: 
+  gridWidth: 22
+  gridHeight: 22
+  numRooms: 4
+  roomMinSize: {x: 4, y: 4}
+  roomMaxSize: {x: 10, y: 10}
+  groundTile: {fileID: 11400000, guid: ba2eaa343cca0d34f8794e00cdcd3c18, type: 2}
+  wallTile: {fileID: 11400000, guid: 190c8e153038dd4459ad5c1d95d6972e, type: 2}
+  playerPrefab: {fileID: 9094627802003585634, guid: 7eb2a72f8001b854ea594de96695fe83, type: 3}
+  enemyPrefab: {fileID: 9094627802003585634, guid: 19eea4cb81e5be542b198a02e4170fb7, type: 3}
+  trapPrefab: {fileID: 4358333635965940131, guid: 333baac1f7ef4d44abd23d5214deb9f8, type: 3}
+  coinPrefab: {fileID: 4358333635965940131, guid: 9c052d154c5792f41863fec3313b306b, type: 3}
+  healthPotionPrefab: {fileID: 6294149369470544528, guid: 13e50723ca10e0d4a950f91e6c2bf6dc, type: 3}
+  exitPrefab: {fileID: 2240346086572252338, guid: 870076a32abb5c746a8b4e580f19c358, type: 3}

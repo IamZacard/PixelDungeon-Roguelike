@@ -1,33 +1,30 @@
 using UnityEngine;
-using UnityEngine.UI; // Required for Slider
+using UnityEngine.UI;
 using TMPro;
 
 public class EnemyHealthUI : MonoBehaviour
 {
     [Header("Enemy Health UI")]
-    [SerializeField] private GameObject healthUIPrefab; // Assigned in Inspector, not instantiated
-    [SerializeField] private TextMeshProUGUI nameText;  // UI text for the enemy’s name
-    [SerializeField] private TextMeshProUGUI healthText; // UI text for the enemy’s health
-    [SerializeField] private Slider healthSlider;       // Slider for the health bar
+    [SerializeField] private GameObject healthUIPrefab;
+    [SerializeField] private TextMeshProUGUI healthText;
+    [SerializeField] private Slider healthSlider;
 
     private EnemyController enemy;
     private Transform playerTransform;
 
     void Start()
     {
-        // Find player
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform;
-        else Debug.LogWarning("EnemyHealthUI: Player not found! UI visibility may not work.");
+        else Debug.LogWarning("EnemyHealthUI: Player not found!");
 
-        // Get EnemyController from the same GameObject
         enemy = GetComponent<EnemyController>();
         if (enemy != null)
         {
-            Setup(enemy); // Initialize UI with this enemy
+            Setup(enemy);
             if (healthUIPrefab != null)
             {
-                healthUIPrefab.SetActive(false); // Start hidden
+                healthUIPrefab.SetActive(false);
             }
             else
             {
@@ -44,9 +41,8 @@ public class EnemyHealthUI : MonoBehaviour
     {
         if (playerTransform == null || healthUIPrefab == null) return;
 
-        // Show/hide UI based on player proximity (1 cell away)
         float distanceToPlayer = Vector2.Distance(playerTransform.position, transform.position);
-        if (distanceToPlayer <= 1f) // 1 unit away
+        if (distanceToPlayer <= 1f)
         {
             healthUIPrefab.SetActive(true);
         }
@@ -59,44 +55,28 @@ public class EnemyHealthUI : MonoBehaviour
     public void Setup(EnemyController enemyController)
     {
         enemy = enemyController;
-        /*if (nameText != null)
-        {
-            nameText.text = enemy.gameObject.name;
-        }*/
-        UpdateHealth(); // Set initial health display
+        UpdateHealth();
     }
 
     public void UpdateHealth()
     {
         if (enemy == null) return;
 
-        // Update the health text
         if (healthText != null)
         {
             healthText.text = $"{enemy.GetHealth()}/{enemy.GetMaxHealth()}";
         }
-        else
-        {
-            Debug.LogWarning("healthText is not assigned in EnemyHealthUI");
-        }
 
-        // Update the health slider
         if (healthSlider != null)
         {
             if (enemy.GetMaxHealth() > 0)
             {
-                float healthPercentage = (float)enemy.GetHealth() / enemy.GetMaxHealth();
-                healthSlider.value = healthPercentage;
+                healthSlider.value = (float)enemy.GetHealth() / enemy.GetMaxHealth();
             }
             else
             {
                 healthSlider.value = 0;
-                Debug.LogWarning("enemy.GetMaxHealth() is zero, cannot calculate health percentage");
             }
-        }
-        else
-        {
-            Debug.LogWarning("healthSlider is not assigned in EnemyHealthUI");
         }
     }
 }

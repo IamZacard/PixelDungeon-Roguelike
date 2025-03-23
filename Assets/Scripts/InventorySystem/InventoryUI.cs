@@ -3,47 +3,52 @@ using UnityEngine.UI;
 
 public class InventoryUI : MonoBehaviour
 {
-    public Transform inventoryPanel;
-    public Transform equipmentPanel;
     public GameObject slotPrefab;
-    Inventory inventory;
-    Equipment equipment;
+    public Transform content; // Assign the ScrollView's "Content" in the inspector
+    private PlayerInventory playerInventory;
 
     void Start()
     {
-        inventory = FindObjectOfType<Inventory>();
-        equipment = FindObjectOfType<Equipment>();
-        inventory.onInventoryChangedCallback += UpdateUI;
-        equipment.onEquipmentChangedCallback += UpdateUI;
-        UpdateUI();
+        playerInventory = FindObjectOfType<PlayerInventory>();
+        playerInventory.OnItemAdded += AddItemSlot;
+        playerInventory.OnItemRemoved += RemoveItemSlot;
+        // Populate initial inventory
+        foreach (var item in playerInventory.inventory)
+        {
+            AddItemSlot(item);
+        }
     }
 
-    void UpdateUI()
+    void AddItemSlot(Item item)
     {
-        // Clear existing slots
-        foreach (Transform child in inventoryPanel) Destroy(child.gameObject);
-        foreach (Transform child in equipmentPanel) Destroy(child.gameObject);
+        GameObject slot = Instantiate(slotPrefab, content);
+        slot.GetComponentInChildren<Image>().sprite = item.icon;
+        slot.GetComponent<Button>().onClick.AddListener(() => OnItemSelected(item));
+    }
 
-        // Inventory slots
-        for (int i = 0; i < inventory.inventorySize; i++)
+    void RemoveItemSlot(Item item)
+    {
+        foreach (Transform child in content)
         {
-            GameObject slot = Instantiate(slotPrefab, inventoryPanel);
-            if (i < inventory.items.Count)
+            ItemSlot slot = child.GetComponent<ItemSlot>();
+            if (slot != null && slot.item == item)
             {
-                slot.GetComponent<Image>().sprite = inventory.items[i].icon;
-                int index = i;
-                //slot.GetComponent<Button>().onClick.AddListener(() => FindObjectOfType<Player>().EquipFromInventory(index));
-            }
-        }
-
-        // Equipment slots
-        foreach (Equipment.EquipmentSlot slot in equipment.slots)
-        {
-            GameObject equipSlot = Instantiate(slotPrefab, equipmentPanel);
-            if (slot.equippedItem != null)
-            {
-                equipSlot.GetComponent<Image>().sprite = slot.equippedItem.icon;
+                Destroy(child.gameObject);
+                break;
             }
         }
     }
+
+    void OnItemSelected(Item item)
+    {
+        // Simple example: Equip the item directly
+        // In a real game, show a context menu with "Equip"
+        playerInventory.EquipItem(item);
+    }
+}
+
+// Attach this to each slot to reference its item
+public class ItemSlot : MonoBehaviour
+{
+    public Item item;
 }

@@ -131,12 +131,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 210685115}
-  - component: {fileID: 210685121}
-  - component: {fileID: 210685116}
-  - component: {fileID: 210685117}
-  - component: {fileID: 210685120}
   - component: {fileID: 210685119}
   - component: {fileID: 210685118}
+  - component: {fileID: 210685117}
+  - component: {fileID: 210685120}
+  - component: {fileID: 210685116}
   m_Layer: 0
   m_Name: LevelManager
   m_TagString: Untagged
@@ -168,7 +167,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d74a5f890e89ae4a88b779494640dba, type: 3}
+  m_Script: {fileID: 11500000, guid: 09d827bb436ac3c48ac1c8ceddbfad58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &210685117
@@ -180,10 +179,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3325a8390597a77418a681b96cdda986, type: 3}
+  m_Script: {fileID: 11500000, guid: d7ab4be0bd4552848bb4dc958d6bef04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelSettings: {fileID: 11400000, guid: 0af437e48a2ec1c48b25a2f7382781d6, type: 2}
+  groundTilemap: {fileID: 0}
+  wallTilemap: {fileID: 0}
 --- !u!114 &210685118
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,7 +193,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c84859ea00e888c4fbf23335d25c0ae2, type: 3}
+  m_Script: {fileID: 11500000, guid: 8024a708031b72f41b948174364b897e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &210685119
@@ -205,9 +205,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7576f9d22f1662e409e00debe5865198, type: 3}
+  m_Script: {fileID: 11500000, guid: ee363403f454dbf4b98c4da4d6e475d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  settings: {fileID: 11400000, guid: d6b0bc6ccbce1a345842fbdca4b4d3e5, type: 2}
+  tilemapManager: {fileID: 210685117}
+  gridGenerator: {fileID: 210685118}
+  entitySpawner: {fileID: 210685120}
+  virtualCamera: {fileID: 0}
 --- !u!114 &210685120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,25 +222,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 210685113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 484ff3dc5981c1d41b9c9c56193ed17f, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ec9563a6190ae542b3156d4281f95ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &210685121
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 210685113}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2722e88c8cd927049895725e6e6b270c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  settings: {fileID: 11400000, guid: 0af437e48a2ec1c48b25a2f7382781d6, type: 2}
-  tilemapManager: {fileID: 210685118}
-  gridGenerator: {fileID: 210685119}
-  entitySpawner: {fileID: 210685120}
+  settings: {fileID: 11400000, guid: d6b0bc6ccbce1a345842fbdca4b4d3e5, type: 2}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,7 +358,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -706,7 +696,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -1151,7 +1141,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -1277,7 +1267,7 @@ Transform:
   m_GameObject: {fileID: 1787311286}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

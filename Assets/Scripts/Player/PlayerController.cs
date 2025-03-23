@@ -1,5 +1,6 @@
 using UnityEngine;
-using System;
+using System.Collections;
+using System.Linq;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,8 +11,10 @@ public class PlayerController : MonoBehaviour
     public PlayerInteraction playerInteraction;
     public Collider2D playerCollider;
 
-    public static event Action OnPlayerTurnEnded;
+    [SerializeField] private LevelSettings levelSettings; // Assign in Inspector or load dynamically
+
     private bool isPlayerTurn = true;
+    private bool isSceneTransitioning = false;
 
     void Start()
     {
@@ -26,14 +29,22 @@ public class PlayerController : MonoBehaviour
             if (playerCollider == null) Debug.LogError("Player needs a Collider2D!");
         }
 
+        if (levelSettings == null)
+        {
+            levelSettings = Resources.Load<LevelSettings>("LevelSettings");
+            if (levelSettings == null) Debug.LogError("LevelSettings not found in Resources!");
+        }
+
         playerMovement.Setup(this);
-        playerInteraction.Setup(this);
+        playerInteraction.Setup(this, levelSettings);
 
         Debug.Log("PlayerController initialized");
     }
 
     void Update()
     {
+        if (isSceneTransitioning) return;
+
         if (isPlayerTurn && !playerMovement.IsMoving)
         {
             Vector2 direction = Vector2.zero;
@@ -45,11 +56,13 @@ public class PlayerController : MonoBehaviour
             if (direction != Vector2.zero)
             {
                 isPlayerTurn = false;
-                Debug.Log($"Before Move: {direction}");
                 playerMovement.Move(direction);
-                Debug.Log($"After Move, before UpdateFacing");
                 playerAnimations.UpdateFacing(direction);
-                Debug.Log($"Player moving: {direction}");
+            }
+            else if (Input.GetKeyDown(KeyCode.F)) // Stay-in-place move
+            {
+                isPlayerTurn = false;
+                playerMovement.SkipMove(); // New method for F key
             }
         }
 
@@ -64,15 +77,21 @@ public class PlayerController : MonoBehaviour
 
     void EndPlayerTurn()
     {
-        Debug.Log("Player turn ended");
-        OnPlayerTurnEnded?.Invoke();
+        if (isSceneTransitioning) return;
+        StartCoroutine(ProcessEnemyTurns());
     }
 
-    public void OnEnemyTurnsComplete()
+    IEnumerator ProcessEnemyTurns()
     {
-        isPlayerTurn = true;
-        Debug.Log("Player turn resumed");
-    }
+        EnemyController[] enemies = FindObjectsOfType<EnemyController>().Where(e => e.gameObject.activeInHierarchy).ToArray();
+        Debug.Log($"Processing {enemies.Length} enemy turns.");
 
-    public bool IsPlayerTurn => isPlayerTurn;
+        foreach (EnemyController enemy in enemies)
+        {
+            yield return StartCoroutine(enemy.TakeTurnCoroutine());
+        }
+
+        Debug.Log("All enemy turns finished. Player's turn resumed.");
+        isPlayerTurn = true;
+    }
 }

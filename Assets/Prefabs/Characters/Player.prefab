@@ -267,6 +267,7 @@ MonoBehaviour:
   playerHealth: {fileID: 4063901782801580023}
   playerInteraction: {fileID: 6059831092457258888}
   playerCollider: {fileID: 2712081946711658860}
+  levelSettings: {fileID: 11400000, guid: d6b0bc6ccbce1a345842fbdca4b4d3e5, type: 2}
 --- !u!114 &626825073487482671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,7 +280,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 028842e0365ece344b3be155fd670210, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
+  moveSpeed: 10
+  attackParticleEffect: {fileID: 599728429394441158, guid: 150fbb197cab8324781ca6b829e5872a, type: 3}
 --- !u!114 &7817583053453681047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,6 +311,7 @@ MonoBehaviour:
   defense: 2
   healthBar: {fileID: 2166566331075659869}
   healthText: {fileID: 6462379294772177075}
+  playerSprite: {fileID: 6008493095086900998}
 --- !u!114 &6059831092457258888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322,6 +325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wealth: 0
+  interactionRadius: 0.2
 --- !u!1001 &965024760037100612
 PrefabInstance:
   m_ObjectHideFlags: 0

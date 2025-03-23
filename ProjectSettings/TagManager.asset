@@ -7,6 +7,10 @@ TagManager:
   - Enemy
   - Collectable
   - Wall
+  - Coin
+  - Trap
+  - Potion
+  - Exit
   layers:
   - Default
   - TransparentFX
@@ -14,7 +18,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Interactable
   - 
   - 
   - 

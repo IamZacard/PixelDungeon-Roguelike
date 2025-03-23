@@ -1,60 +1,86 @@
 using UnityEngine;
-using System;
 
-public class Equipment : MonoBehaviour
+public class Equipment
 {
-    [Serializable]
-    public class EquipmentSlot
-    {
-        public ItemType slotType;
-        public Item equippedItem;
-    }
+    public Item helmet;
+    public Item coreArmor;
+    public Item hands;
+    public Item boots;
+    public Item sword;
+    public Item shield;
 
-    public EquipmentSlot[] slots; // Array for Helmet, Armor, Gloves, Boots, Sword, Shield
-    public delegate void OnEquipmentChanged();
-    public OnEquipmentChanged onEquipmentChangedCallback;
-
-    private void Awake()
+    public Item Equip(Item item)
     {
-        slots = new EquipmentSlot[6];
-        slots[0] = new EquipmentSlot { slotType = ItemType.Helmet };
-        slots[1] = new EquipmentSlot { slotType = ItemType.Armor };
-        slots[2] = new EquipmentSlot { slotType = ItemType.Gloves };
-        slots[3] = new EquipmentSlot { slotType = ItemType.Boots };
-        slots[4] = new EquipmentSlot { slotType = ItemType.Sword };
-        slots[5] = new EquipmentSlot { slotType = ItemType.Shield };
-    }
+        // Check if the item is equippable (optional, but good practice)
+        if (!IsEquippable(item.type)) return null;
 
-    public bool EquipItem(Item item)
-    {
-        foreach (EquipmentSlot slot in slots)
+        Item currentItem = null;
+        switch (item.type)
         {
-            if (slot.slotType == item.type)
-            {
-                if (slot.equippedItem != null)
-                {
-                    // Swap with inventory or unequip logic here
-                    FindObjectOfType<Inventory>().AddItem(slot.equippedItem);
-                }
-                slot.equippedItem = item;
-                onEquipmentChangedCallback?.Invoke();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void UnequipItem(ItemType type)
-    {
-        foreach (EquipmentSlot slot in slots)
-        {
-            if (slot.slotType == type && slot.equippedItem != null)
-            {
-                FindObjectOfType<Inventory>().AddItem(slot.equippedItem);
-                slot.equippedItem = null;
-                onEquipmentChangedCallback?.Invoke();
+            case ItemType.Helmet:
+                currentItem = helmet;
+                helmet = item;
                 break;
-            }
+            case ItemType.CoreArmor:
+                currentItem = coreArmor;
+                coreArmor = item;
+                break;
+            case ItemType.Hands:
+                currentItem = hands;
+                hands = item;
+                break;
+            case ItemType.Boots:
+                currentItem = boots;
+                boots = item;
+                break;
+            case ItemType.Sword:
+                currentItem = sword;
+                sword = item;
+                break;
+            case ItemType.Shield:
+                currentItem = shield;
+                shield = item;
+                break;
         }
+        return currentItem; // Return the previously equipped item
+    }
+
+    public Item Unequip(ItemType type)
+    {
+        Item currentItem = null;
+        switch (type)
+        {
+            case ItemType.Helmet:
+                currentItem = helmet;
+                helmet = null;
+                break;
+            case ItemType.CoreArmor:
+                currentItem = coreArmor;
+                coreArmor = null;
+                break;
+            case ItemType.Hands:
+                currentItem = hands;
+                hands = null;
+                break;
+            case ItemType.Boots:
+                currentItem = boots;
+                boots = null;
+                break;
+            case ItemType.Sword:
+                currentItem = sword;
+                sword = null;
+                break;
+            case ItemType.Shield:
+                currentItem = shield;
+                shield = null;
+                break;
+        }
+        return currentItem;
+    }
+
+    private bool IsEquippable(ItemType type)
+    {
+        return type == ItemType.Helmet || type == ItemType.CoreArmor || type == ItemType.Hands ||
+               type == ItemType.Boots || type == ItemType.Sword || type == ItemType.Shield;
     }
 }

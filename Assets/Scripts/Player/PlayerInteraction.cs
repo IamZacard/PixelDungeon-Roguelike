@@ -1,91 +1,155 @@
 using UnityEngine;
-using UnityEngine.Tilemaps;
-using Random = UnityEngine.Random;
+using UnityEngine.SceneManagement;
+using System.Collections;
+using System.Linq;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    private LevelSettings levelSettings; // Reference to the settings asset
-    private LevelGenerator levelGenerator;
-    private Tilemap encountersTilemap;
+    private LevelSettings levelSettings;
     private PlayerController controller;
     private PlayerHealth playerHealth;
     private PlayerMovement playerMovement;
     private PlayerAnimations playerAnimations;
+    private Collider2D playerCollider;
 
     [SerializeField] private int wealth = 0;
+    [SerializeField] private float interactionRadius = 0.2f;
 
-    public void Setup(PlayerController ctrl)
+    private Animator exitAnimator; // Reference to the exit's Animator
+    private bool hasCheckedEnemies = false; // Prevent repeated enemy checks
+
+    public void Setup(PlayerController ctrl, LevelSettings settings)
     {
         controller = ctrl;
+        levelSettings = settings;
+
         playerHealth = ctrl.GetComponent<PlayerHealth>();
         playerMovement = ctrl.GetComponent<PlayerMovement>();
         playerAnimations = ctrl.GetComponent<PlayerAnimations>();
+        playerCollider = ctrl.GetComponent<Collider2D>();
 
-        // Find LevelGenerator to access its settings
-        LevelGenerator levelGenerator = FindObjectOfType<LevelGenerator>();
-        if (levelGenerator != null)
+        if (levelSettings == null)
         {
-            // Access LevelSettings through reflection or a public method (we'll add a getter to LevelGenerator)
-            levelSettings = levelGenerator.GetLevelSettings();
+            Debug.LogError("LevelSettings not provided to PlayerInteraction!");
+            return;
+        }
+        if (playerHealth == null)
+        {
+            Debug.LogError("PlayerHealth component missing on PlayerController!");
+            return;
+        }
+        if (playerMovement == null)
+        {
+            Debug.LogError("PlayerMovement component missing on PlayerController!");
+            return;
+        }
+        if (playerAnimations == null)
+        {
+            Debug.LogError("PlayerAnimations component missing on PlayerController!");
+            return;
+        }
+        if (playerCollider == null)
+        {
+            Debug.LogError("Player needs a Collider2D component!");
+            return;
         }
 
-        // Find TilemapManager to get the encountersTilemap
-        TilemapManager tilemapManager = FindObjectOfType<TilemapManager>();
-        if (tilemapManager != null)
+        // Find the exit's Animator at setup
+        GameObject exitObject = GameObject.FindWithTag("Exit");
+        if (exitObject != null)
         {
-            encountersTilemap = tilemapManager.GetEncountersTilemap();
+            exitAnimator = exitObject.GetComponent<Animator>();
+            if (exitAnimator == null)
+            {
+                Debug.LogError("Exit object is missing an Animator component!");
+            }
+        }
+        else
+        {
+            Debug.LogError("No object with 'Exit' tag found in the scene!");
         }
 
-        Debug.Log($"PlayerInteraction setup: LevelSettings {(levelSettings != null ? "found" : "null")}, Tilemap {(encountersTilemap != null ? "found" : "null")}");
+        Debug.Log("PlayerInteraction setup complete");
+    }
 
-        if (levelSettings == null || encountersTilemap == null)
+    void Update()
+    {
+        // Check enemy status continuously, but only update animation once
+        if (!hasCheckedEnemies && exitAnimator != null)
         {
-            Debug.LogError("Could not automatically find LevelSettings or encountersTilemap!");
+            EnemyController[] enemies = FindObjectsOfType<EnemyController>();
+            if (enemies.Length == 0 || enemies.All(e => !e.gameObject.activeInHierarchy))
+            {
+                Debug.Log("All enemies are dead! Exit is now open.");
+                exitAnimator.SetBool("Opened", true);
+                hasCheckedEnemies = true; // Prevent repeated updates
+            }
         }
     }
 
     public void HandleTileEffect()
     {
-        if (encountersTilemap == null || !encountersTilemap.gameObject.activeInHierarchy) return;
-
-        Vector3Int tilePos = encountersTilemap.WorldToCell(transform.position);
-        TileBase currentTile = encountersTilemap.GetTile(tilePos);
-        if (currentTile == null) return;
-
-        if (levelSettings == null)
+        if (playerHealth == null || playerMovement == null || playerAnimations == null)
         {
-            Debug.LogError("LevelSettings is null in HandleTileEffect!");
+            Debug.LogError("PlayerInteraction not fully set up! Cannot handle tile effects.");
             return;
         }
 
-        if (currentTile == levelSettings.escapeTile)
+        Vector2 pos = transform.position;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(pos, interactionRadius);
+
+        foreach (Collider2D hit in hits)
         {
-            OnEscapeTile(tilePos);
+            if (hit.CompareTag("Exit"))
+            {
+                OnEscapeTile(pos);
+            }
+            else if (hit.CompareTag("Trap"))
+            {
+                OnTrapTile(pos);
+            }
+            else if (hit.CompareTag("Coin"))
+            {
+                OnCoinTile(pos);
+                Destroy(hit.gameObject);
+            }
+            else if (hit.CompareTag("Potion"))
+            {
+                OnPotionTile(pos);
+                Destroy(hit.gameObject);
+            }
         }
-        else if (currentTile == levelSettings.trapTile)
+
+        if (hits.Length == 0)
         {
-            OnTrapTile(tilePos);
-        }
-        else if (currentTile == levelSettings.enemyTile)
-        {
-            OnEnemyTile(tilePos);
-        }
-        else if (currentTile == levelSettings.coinTile)
-        {
-            OnCoinTile(tilePos);
-        }
-        else if (currentTile == levelSettings.potionTile)
-        {
-            OnPotionTile(tilePos);
+            Debug.Log("No interactive objects detected at player position");
         }
     }
 
-    void OnEscapeTile(Vector3Int tilePos)
+    #region Interaction Effects
+    private void OnEscapeTile(Vector2 pos)
     {
-        Debug.Log("Player reached the escape tile! Level complete!");
+        // Check if all enemies are dead when player reaches the exit
+        EnemyController[] enemies = FindObjectsOfType<EnemyController>();
+        if (enemies.Length == 0 || enemies.All(e => !e.gameObject.activeInHierarchy))
+        {
+            Debug.Log("Player reached the open exit! Proceeding to next level...");
+            StartCoroutine(LoadNextSceneAfterDelay(1f)); // Delay for animation or transition effect
+        }
+        else
+        {
+            Debug.Log("Cannot proceed: Some enemies are still alive!");
+        }
     }
 
-    void OnTrapTile(Vector3Int tilePos)
+    private IEnumerator LoadNextSceneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(currentSceneIndex + 1); // Load next scene in build order
+    }
+
+    private void OnTrapTile(Vector2 pos)
     {
         Debug.Log("Player stepped on a trap!");
         playerHealth.TakeDamage(10);
@@ -101,7 +165,7 @@ public class PlayerInteraction : MonoBehaviour
         }
         else
         {
-            Debug.Log("Trap jump blocked by wall! Moving to opposite side.");
+            Debug.Log("Trap jump blocked! Trying opposite direction.");
             Vector2 oppositeDirection = -jumpDirection;
             Vector2 oppositePos = (Vector2)transform.position + oppositeDirection;
 
@@ -111,49 +175,31 @@ public class PlayerInteraction : MonoBehaviour
             }
             else
             {
-                Debug.Log("Opposite direction also blocked! Staying put.");
+                Debug.Log("Opposite direction blocked! Player stays put.");
             }
         }
     }
 
-    void OnEnemyTile(Vector3Int tilePos)
-    {
-        Debug.Log("Player encountered an enemy!");
-        playerHealth.TakeDamage(5);
-        encountersTilemap.SetTile(tilePos, null);
-    }
-
-    void OnCoinTile(Vector3Int tilePos)
+    private void OnCoinTile(Vector2 pos)
     {
         Debug.Log("Player picked up a coin!");
         GetWealthy(50);
-        encountersTilemap.SetTile(tilePos, null);
-        Debug.Log($"Post-coin state: isPlayerTurn={controller.IsPlayerTurn}, IsMoving={playerMovement.IsMoving}");
     }
 
-    void OnPotionTile(Vector3Int tilePos)
+    private void OnPotionTile(Vector2 pos)
     {
         Debug.Log("Player picked up a potion!");
         playerHealth.GainHealth(30);
-        encountersTilemap.SetTile(tilePos, null);
     }
+    #endregion
 
+    #region Wealth Management
     private void GetWealthy(int amount)
     {
         wealth += amount;
-        Debug.Log($"Player got {amount} money! Wealth: {wealth}");
+        Debug.Log($"Player gained {amount} wealth! Total wealth: {wealth}");
     }
 
     public int Wealth => wealth;
-
-    public Vector3Int GetTilePosition()
-    {
-        return encountersTilemap != null ?
-            encountersTilemap.WorldToCell(transform.position) : Vector3Int.zero;
-    }
-
-    public Tilemap GetEncountersTilemap()
-    {
-        return encountersTilemap;
-    }
+    #endregion
 }

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Tilemaps;
 using System.Collections;
 
 public class EnemyController : MonoBehaviour
@@ -13,46 +12,48 @@ public class EnemyController : MonoBehaviour
 
     [Header("Movement and References")]
     private Transform playerTransform;
-    private Tilemap encountersTilemap;
     private Vector2 targetPosition;
     private bool isMoving = false;
 
     private SpriteRenderer spriteRenderer;
-
-    [Header("Enemy Health UI")]
     private EnemyHealthUI healthUI;
+    private Color originalColor; // Store the sprite's original color
 
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-
-        // Find player
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTransform = player.transform;
-        else Debug.LogWarning("EnemyController: Player not found! UI and movement may not work.");
-
-        // Set up tilemap and position
-        encountersTilemap = FindObjectOfType<TilemapManager>().encountersTilemap;
-        targetPosition = transform.position;
-        currentHealth = maxHealth;
-
-        // Link to EnemyHealthUI on the same GameObject
-        healthUI = GetComponent<EnemyHealthUI>();
-        if (healthUI == null)
+        if (spriteRenderer == null)
         {
-            Debug.LogError("EnemyHealthUI component not found on this GameObject!");
+            Debug.LogError("EnemyController: No SpriteRenderer found on enemy!");
+        }
+        originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTransform = player.transform;
         }
         else
         {
-            healthUI.Setup(this); // Initialize the UI with this enemy
+            Debug.LogWarning("EnemyController: Player not found!");
+        }
+
+        targetPosition = transform.position;
+        currentHealth = maxHealth;
+
+        healthUI = GetComponent<EnemyHealthUI>();
+        if (healthUI != null)
+        {
+            healthUI.Setup(this);
+        }
+        else
+        {
+            Debug.LogError("EnemyHealthUI component not found on this GameObject!");
         }
     }
 
     void Update()
     {
-        if (playerTransform == null) return; // Skip if player isn’t found
-
-        // Handle movement
         if (isMoving)
         {
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
@@ -60,67 +61,70 @@ public class EnemyController : MonoBehaviour
             {
                 transform.position = targetPosition;
                 isMoving = false;
-                Debug.Log("Enemy movement finished");
-                TurnManager.Instance.EnemyFinishedTurn();
             }
         }
     }
 
-    public void TakeEnemyTurn()
+    public IEnumerator TakeTurnCoroutine()
     {
         if (currentHealth <= 0)
         {
-            TurnManager.Instance.EnemyFinishedTurn();
-            return;
+            yield break;
         }
-        if (isMoving) return;
+
+        if (playerTransform == null)
+        {
+            yield break;
+        }
 
         Vector2 playerPos = playerTransform.position;
         Vector2 enemyPos = transform.position;
 
-        // Check if player is orthogonally adjacent (1 unit away, no diagonals)
         if (IsOrthogonallyAdjacent(playerPos, enemyPos))
         {
+            Debug.Log($"{gameObject.name} attacks the player.");
             AttackPlayer();
-            TurnManager.Instance.EnemyFinishedTurn();
+            yield return null;
         }
         else
         {
+            Debug.Log($"{gameObject.name} is attempting to move.");
             Move();
-            if (!isMoving)
+
+            while (isMoving)
             {
-                TurnManager.Instance.EnemyFinishedTurn();
+                yield return null;
             }
         }
+
+        yield return null;
     }
 
     private bool IsOrthogonallyAdjacent(Vector2 playerPos, Vector2 enemyPos)
     {
         float deltaX = Mathf.Abs(playerPos.x - enemyPos.x);
         float deltaY = Mathf.Abs(playerPos.y - enemyPos.y);
-
-        // Enemy can attack if exactly 1 unit away horizontally or vertically, but not diagonally
-        bool isAdjacent = (deltaX == 1f && deltaY == 0f) || (deltaX == 0f && deltaY == 1f);
-        if (isAdjacent)
-        {
-            Debug.Log($"Enemy is orthogonally adjacent to player: deltaX={deltaX}, deltaY={deltaY}");
-        }
-        return isAdjacent;
+        return (Mathf.Approximately(deltaX, 1f) && Mathf.Approximately(deltaY, 0f)) ||
+               (Mathf.Approximately(deltaX, 0f) && Mathf.Approximately(deltaY, 1f));
     }
 
     private void AttackPlayer()
     {
+        if (playerTransform == null) return;
+
         PlayerHealth playerHealth = playerTransform.GetComponent<PlayerHealth>();
         if (playerHealth != null)
         {
             int damage = Mathf.Max(attack - playerHealth.GetDefense(), 0);
             playerHealth.TakeDamage(damage);
-            Debug.Log($"Enemy attacks player for {damage} damage!");
+            Debug.Log($"{gameObject.name} attacks player for {damage} damage!");
         }
     }
 
     private void Move()
     {
+        if (playerTransform == null) return;
+
         int roll = Random.Range(1, 101);
         Vector2 newPos;
         if (roll >= 65)
@@ -132,19 +136,15 @@ public class EnemyController : MonoBehaviour
             Vector2 moveDirection = Mathf.Abs(deltaX) > Mathf.Abs(deltaY) ?
                 (deltaX > 0 ? Vector2.right : Vector2.left) :
                 (deltaY > 0 ? Vector2.up : Vector2.down);
-            newPos = (Vector2)transform.position + moveDirection;
-
+            newPos = enemyPos + moveDirection;
             UpdateFacing(moveDirection);
-            Debug.Log($"Enemy attempting to move toward player: {newPos}");
         }
         else
         {
             Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
             Vector2 randomDir = directions[Random.Range(0, directions.Length)];
             newPos = (Vector2)transform.position + randomDir;
-
-            UpdateFacing(randomDir); // Update facing for random movement too
-            Debug.Log($"Enemy attempting random move: {newPos}");
+            UpdateFacing(randomDir);
         }
 
         if (IsWalkable(newPos))
@@ -152,65 +152,68 @@ public class EnemyController : MonoBehaviour
             targetPosition = newPos;
             isMoving = true;
         }
-        else
-        {
-            Debug.Log("Enemy movement blocked");
-        }
     }
 
     public void TakeDamage(int damage)
     {
-        currentHealth -= damage;
+        int damageTaken = Mathf.Max(damage - defense, 0);
+        currentHealth -= damageTaken;
+        Debug.Log($"{gameObject.name} took {damageTaken} damage! HP: {currentHealth}");
+
+        // Trigger the blink effect if damage is taken
+        if (damageTaken > 0 && spriteRenderer != null)
+        {
+            StartCoroutine(BlinkRed());
+        }
+
         if (healthUI != null)
         {
-            healthUI.UpdateHealth(); // Update the health display
-        }
-        else
-        {
-            Debug.LogWarning("healthUI is null in TakeDamage!");
+            healthUI.UpdateHealth();
         }
         if (currentHealth <= 0)
         {
-            Destroy(gameObject);
+            Die();
         }
     }
 
-    private void Die()
+    public void Die()
     {
-        Debug.Log("Enemy died!");
-        isMoving = false;
-        StartCoroutine(DeactivateAtEndOfFrame());
-    }
-
-    private IEnumerator DeactivateAtEndOfFrame()
-    {
-        yield return new WaitForEndOfFrame();
-        gameObject.SetActive(false);
-        Debug.Log("Enemy deactivated at end of frame");
+        Destroy(gameObject);
+        Debug.Log($"{name} is dead!");
     }
 
     private bool IsWalkable(Vector2 pos)
     {
         Collider2D hit = Physics2D.OverlapPoint(pos, LayerMask.GetMask("Default"));
-        if (hit != null && (hit.CompareTag("Wall") || (hit.CompareTag("Enemy") && hit.gameObject != gameObject)))
+        if (hit != null && (hit.CompareTag("Wall") ||
+                            (hit.CompareTag("Enemy") && hit.gameObject != gameObject) ||
+                            hit.CompareTag("Trap")))
         {
             return false;
         }
-        Vector3Int tilePos = encountersTilemap.WorldToCell(pos);
-        TileBase tile = encountersTilemap.GetTile(tilePos);
-        return tile == null;
+        return true;
     }
 
     public void UpdateFacing(Vector2 direction)
     {
         if (spriteRenderer == null) return;
-        if (direction.x < 0) spriteRenderer.flipX = true; // Left
-        else if (direction.x > 0) spriteRenderer.flipX = false; // Right
-        Debug.Log($"Enemy facing updated: {direction}, flipX: {spriteRenderer.flipX}");
+        if (direction.x < 0) spriteRenderer.flipX = true;
+        else if (direction.x > 0) spriteRenderer.flipX = false;
+    }
+
+    private IEnumerator BlinkRed()
+    {
+        // Set sprite color to red
+        spriteRenderer.color = Color.red;
+
+        // Wait for 0.3 seconds
+        yield return new WaitForSeconds(0.3f);
+
+        // Revert to original color
+        spriteRenderer.color = originalColor;
     }
 
     public int GetDefense() => defense;
     public int GetHealth() => currentHealth;
     public int GetMaxHealth() => maxHealth;
-    public bool IsMoving => isMoving;
 }
