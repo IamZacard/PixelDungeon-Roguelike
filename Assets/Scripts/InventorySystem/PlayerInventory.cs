@@ -12,10 +12,24 @@ public class PlayerInventory : MonoBehaviour
     public event Action<Item> OnItemRemoved;
     public event Action<ItemType, Item> OnEquipmentChanged;
 
-    public void PickUpItem(Item item)
+    public bool IsInventoryFull()
     {
+        return inventory.Count >= 6;
+    }
+    public bool PickUpItem(Item item)
+    {
+        // Double-check inventory space (redundant with ItemPickUp check, but good practice)
+        if (IsInventoryFull())
+        {
+            Debug.Log("Inventory is full! Cannot pick up item: " + item.name);
+            return false;
+        }
+
+        // Add item to inventory
         inventory.Add(item);
         OnItemAdded?.Invoke(item);
+        Debug.Log($"Item {item.name} added to inventory. Current count: {inventory.Count}");
+        return true;
     }
 
     public void EquipItem(Item item)

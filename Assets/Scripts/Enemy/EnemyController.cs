@@ -17,7 +17,7 @@ public class EnemyController : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     private EnemyHealthUI healthUI;
-    private Color originalColor; // Store the sprite's original color
+    private Color originalColor;
 
     void Start()
     {
@@ -67,7 +67,7 @@ public class EnemyController : MonoBehaviour
 
     public IEnumerator TakeTurnCoroutine()
     {
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 || !gameObject.activeInHierarchy) // Added active check
         {
             yield break;
         }
@@ -115,7 +115,7 @@ public class EnemyController : MonoBehaviour
         PlayerHealth playerHealth = playerTransform.GetComponent<PlayerHealth>();
         if (playerHealth != null)
         {
-            int damage = Mathf.Max(attack - playerHealth.GetDefense(), 0);
+            int damage = Mathf.Max(attack - playerHealth.GetTotalDefense(), 0);
             playerHealth.TakeDamage(damage);
             Debug.Log($"{gameObject.name} attacks player for {damage} damage!");
         }
@@ -160,7 +160,6 @@ public class EnemyController : MonoBehaviour
         currentHealth -= damageTaken;
         Debug.Log($"{gameObject.name} took {damageTaken} damage! HP: {currentHealth}");
 
-        // Trigger the blink effect if damage is taken
         if (damageTaken > 0 && spriteRenderer != null)
         {
             StartCoroutine(BlinkRed());
@@ -187,7 +186,8 @@ public class EnemyController : MonoBehaviour
         Collider2D hit = Physics2D.OverlapPoint(pos, LayerMask.GetMask("Default"));
         if (hit != null && (hit.CompareTag("Wall") ||
                             (hit.CompareTag("Enemy") && hit.gameObject != gameObject) ||
-                            hit.CompareTag("Trap")))
+                            hit.CompareTag("Trap") ||
+                            hit.CompareTag("Player")))
         {
             return false;
         }
@@ -203,13 +203,8 @@ public class EnemyController : MonoBehaviour
 
     private IEnumerator BlinkRed()
     {
-        // Set sprite color to red
         spriteRenderer.color = Color.red;
-
-        // Wait for 0.3 seconds
         yield return new WaitForSeconds(0.3f);
-
-        // Revert to original color
         spriteRenderer.color = originalColor;
     }
 

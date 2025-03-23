@@ -54,12 +54,22 @@ public class GridGenerator : MonoBehaviour
             startingRoom = rooms[0];
         PlaceSpecialTiles(settings);
 
+        // Convert corridor tiles ('C') back to ground tiles ('.') for tilemap compatibility
+        for (int y = 0; y < grid.GetLength(0); y++)
+        {
+            for (int x = 0; x < grid.GetLength(1); x++)
+            {
+                if (grid[y, x] == 'C')
+                    grid[y, x] = '.';
+            }
+        }
+
         int groundCount = 0;
         int wallCount = 0;
         for (int y = 0; y < grid.GetLength(0); y++)
             for (int x = 0; x < grid.GetLength(1); x++)
             {
-                if (grid[y, x] == '.') groundCount++;
+                if (grid[y, x] == '.') groundCount++; // Now only '.' counts as ground
                 else if (grid[y, x] == '#') wallCount++;
             }
         Debug.Log($"Grid generated: {groundCount} ground tiles, {wallCount} wall tiles, {specialTiles.Count} special positions");
@@ -105,7 +115,7 @@ public class GridGenerator : MonoBehaviour
         int minX = Mathf.Min(xStart, xEnd);
         int maxX = Mathf.Max(xStart, xEnd);
         for (int x = minX; x <= maxX; x++)
-            grid[y, x] = '.';
+            grid[y, x] = 'C'; // Mark corridors with 'C'
     }
 
     private void CreateVerticalCorridor(int yStart, int yEnd, int x)
@@ -113,7 +123,7 @@ public class GridGenerator : MonoBehaviour
         int minY = Mathf.Min(yStart, yEnd);
         int maxY = Mathf.Max(yStart, yEnd);
         for (int y = minY; y <= maxY; y++)
-            grid[y, x] = '.';
+            grid[y, x] = 'C'; // Mark corridors with 'C'
     }
 
     private void PlaceWalls()
@@ -122,7 +132,7 @@ public class GridGenerator : MonoBehaviour
         {
             for (int x = 0; x < grid.GetLength(1); x++)
             {
-                if (grid[y, x] == '.')
+                if (grid[y, x] == '.' || grid[y, x] == 'C') // Walls around rooms and corridors
                 {
                     for (int dy = -1; dy <= 1; dy++)
                         for (int dx = -1; dx <= 1; dx++)
@@ -175,10 +185,9 @@ public class GridGenerator : MonoBehaviour
             if (Random.value < 0.7f)
                 PlaceSpecialTileInRoom(room, 'H');
 
-            // Add traps: 0-1 in small rooms, 1-2 in larger rooms
-            int trapCount = isSmallRoom ? Random.Range(1, 3) : Random.Range(2, 4);
+            int trapCount = isSmallRoom ? Random.Range(0, 2) : Random.Range(1, 3);
             for (int t = 0; t < trapCount; t++)
-                PlaceSpecialTileInRoom(room, 'T');
+                PlaceTrapInRoom(room);
         }
     }
 
@@ -191,12 +200,45 @@ public class GridGenerator : MonoBehaviour
             Vector2Int pos = GetRandomPositionInRoom(room);
             if (grid[pos.y, pos.x] == '.' && !specialTiles.ContainsKey(pos))
             {
-                specialTiles[pos] = tileType; // Track position without altering grid
+                specialTiles[pos] = tileType;
                 return true;
             }
             attempts++;
         }
         Debug.LogWarning($"Could not place '{tileType}' in room after {maxAttempts} attempts.");
+        return false;
+    }
+
+    private bool PlaceTrapInRoom(RectInt room)
+    {
+        int attempts = 0;
+        const int maxAttempts = 100;
+        while (attempts < maxAttempts)
+        {
+            Vector2Int pos = GetRandomPositionInRoom(room);
+            if (grid[pos.y, pos.x] == '.' && !specialTiles.ContainsKey(pos) && !IsAdjacentToCorridor(pos))
+            {
+                specialTiles[pos] = 'T';
+                return true;
+            }
+            attempts++;
+        }
+        Debug.LogWarning($"Could not place trap in room after {maxAttempts} attempts.");
+        return false;
+    }
+
+    private bool IsAdjacentToCorridor(Vector2Int pos)
+    {
+        Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+        foreach (Vector2Int dir in directions)
+        {
+            Vector2Int checkPos = pos + dir;
+            if (checkPos.x >= 0 && checkPos.x < grid.GetLength(1) && checkPos.y >= 0 && checkPos.y < grid.GetLength(0))
+            {
+                if (grid[checkPos.y, checkPos.x] == 'C')
+                    return true;
+            }
+        }
         return false;
     }
 

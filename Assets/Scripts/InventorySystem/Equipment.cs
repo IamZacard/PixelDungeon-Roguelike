@@ -9,6 +9,42 @@ public class Equipment
     public Item sword;
     public Item shield;
 
+    public int GetTotalAttackBonus()
+    {
+        int total = 0;
+        if (helmet != null) total += helmet.attackBonus;
+        if (coreArmor != null) total += coreArmor.attackBonus;
+        if (hands != null) total += hands.attackBonus;
+        if (boots != null) total += boots.attackBonus;
+        if (sword != null) total += sword.attackBonus;
+        if (shield != null) total += shield.attackBonus;
+        return total;
+    }
+
+    public int GetTotalDefenseBonus()
+    {
+        int total = 0;
+        if (helmet != null) total += helmet.defenseBonus;
+        if (coreArmor != null) total += coreArmor.defenseBonus;
+        if (hands != null) total += hands.defenseBonus;
+        if (boots != null) total += boots.defenseBonus;
+        if (sword != null) total += sword.attackBonus;
+        if (shield != null) total += shield.defenseBonus;
+        return total;
+    }
+
+    public int GetTotalHealthBonus()
+    {
+        int total = 0;
+        if (helmet != null) total += helmet.healthBonus;
+        if (coreArmor != null) total += coreArmor.healthBonus;
+        if (hands != null) total += hands.healthBonus;
+        if (boots != null) total += boots.healthBonus;
+        if (sword != null) total += sword.healthBonus;
+        if (shield != null) total += shield.healthBonus;
+        return total;
+    }
+
     public Item Equip(Item item)
     {
         // Check if the item is equippable (optional, but good practice)

@@ -3,30 +3,93 @@ using UnityEngine.UI;
 
 public class InventoryUI : MonoBehaviour
 {
-    public GameObject slotPrefab;
-    public Transform content; // Assign the ScrollView's "Content" in the inspector
+    [SerializeField] private GameObject slotPrefab; // Serialized for Inspector assignment
+    [SerializeField] private Transform content;     // ScrollView's "Content" transform
     private PlayerInventory playerInventory;
+    private bool isInitialized = false;
 
     void Start()
     {
+        if (slotPrefab == null || content == null)
+        {
+            Debug.LogError("InventoryUI: slotPrefab or content not assigned in Inspector!");
+            return;
+        }
+
         playerInventory = FindObjectOfType<PlayerInventory>();
+        if (playerInventory != null)
+        {
+            Initialize();
+        }
+        // If not found, Update will handle it
+    }
+
+    void Update()
+    {
+        if (!isInitialized && playerInventory == null)
+        {
+            playerInventory = FindObjectOfType<PlayerInventory>();
+            if (playerInventory != null)
+            {
+                Initialize();
+                enabled = false; // Stop Update after initialization
+            }
+        }
+    }
+
+    private void Initialize()
+    {
+        if (playerInventory == null)
+        {
+            Debug.LogError("InventoryUI: PlayerInventory is still null during initialization!");
+            return;
+        }
+
         playerInventory.OnItemAdded += AddItemSlot;
         playerInventory.OnItemRemoved += RemoveItemSlot;
+
         // Populate initial inventory
         foreach (var item in playerInventory.inventory)
         {
             AddItemSlot(item);
         }
+
+        isInitialized = true;
+        Debug.Log("InventoryUI initialized successfully.");
     }
 
-    void AddItemSlot(Item item)
+    private void AddItemSlot(Item item)
     {
         GameObject slot = Instantiate(slotPrefab, content);
-        slot.GetComponentInChildren<Image>().sprite = item.icon;
-        slot.GetComponent<Button>().onClick.AddListener(() => OnItemSelected(item));
+        ItemSlot itemSlot = slot.GetComponent<ItemSlot>();
+        if (itemSlot == null)
+        {
+            itemSlot = slot.AddComponent<ItemSlot>();
+        }
+        itemSlot.item = item;
+
+        Image iconImage = slot.GetComponentInChildren<Image>();
+        if (iconImage != null)
+        {
+            iconImage.sprite = item.icon;
+        }
+        else
+        {
+            Debug.LogWarning($"InventoryUI: No Image component found in slot for item {item.name}");
+        }
+
+        Button button = slot.GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.AddListener(() => OnItemSelected(item));
+        }
+        else
+        {
+            Debug.LogWarning($"InventoryUI: No Button component found on slot for item {item.name}");
+        }
     }
 
-    void RemoveItemSlot(Item item)
+    private void RemoveItemSlot(Item item)
     {
         foreach (Transform child in content)
         {
@@ -34,21 +97,29 @@ public class InventoryUI : MonoBehaviour
             if (slot != null && slot.item == item)
             {
                 Destroy(child.gameObject);
-                break;
+                break; // Exit after removing the first match
             }
         }
     }
 
-    void OnItemSelected(Item item)
+    private void OnItemSelected(Item item)
     {
-        // Simple example: Equip the item directly
-        // In a real game, show a context menu with "Equip"
+        // Equip the item directly (could expand to context menu later)
         playerInventory.EquipItem(item);
+    }
+
+    void OnDestroy()
+    {
+        // Clean up event subscriptions
+        if (playerInventory != null)
+        {
+            playerInventory.OnItemAdded -= AddItemSlot;
+            playerInventory.OnItemRemoved -= RemoveItemSlot;
+        }
     }
 }
 
-// Attach this to each slot to reference its item
 public class ItemSlot : MonoBehaviour
 {
-    public Item item;
+    public Item item; // Reference to the item this slot represents
 }

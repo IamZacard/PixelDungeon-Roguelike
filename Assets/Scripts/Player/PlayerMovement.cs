@@ -43,7 +43,7 @@ public class PlayerMovement : MonoBehaviour
             EnemyController enemy = hit.GetComponent<EnemyController>();
             if (enemy != null)
             {
-                int damage = Mathf.Max(controller.playerHealth.GetAttack() - enemy.GetDefense(), 0);
+                int damage = Mathf.Max(controller.playerHealth.GetTotalAttack() - enemy.GetDefense(), 0);
                 enemy.TakeDamage(damage);
                 PlayAttackParticleEffect(newPos); // Play particle effect at enemy's position                               
 

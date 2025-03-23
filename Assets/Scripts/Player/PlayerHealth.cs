@@ -2,29 +2,46 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System;
 
 public class PlayerHealth : MonoBehaviour
 {
     [Header("Health Stats")]
-    [SerializeField] private int maxHealth = 100;
+    [SerializeField] private int baseMaxHealth = 100;
     private int currentHealth;
-    [SerializeField] private int attack = 5;
-    [SerializeField] private int defense = 2;
+    [SerializeField] private int baseAttack = 5;
+    [SerializeField] private int baseDefense = 2;
 
     [Header("Health UI")]
     [SerializeField] private Slider healthBar;
     [SerializeField] private TextMeshProUGUI healthText;
 
     [Header("Visual Feedback")]
-    [SerializeField] private SpriteRenderer playerSprite; // Reference to the player's sprite
-    private Color originalColor; // Store the sprite's original color
+    [SerializeField] private SpriteRenderer playerSprite;
+    [SerializeField] private GameObject attackParticleEffect;
+    private Color originalColor;
+
+    // Event for when player dies
+    public event Action OnPlayerDeath;
+
+    // Reference to PlayerInventory
+    private PlayerInventory playerInventory;
 
     void Start()
     {
-        currentHealth = maxHealth;
+        playerInventory = GetComponent<PlayerInventory>();
+        if (playerInventory == null)
+        {
+            Debug.LogError("PlayerHealth: PlayerInventory component not found on the same GameObject!");
+        }
+        else
+        {
+            playerInventory.OnEquipmentChanged += OnEquipmentChanged;
+        }
+
+        currentHealth = baseMaxHealth + (playerInventory?.equipment.GetTotalHealthBonus() ?? 0);
         UpdateHealthBar();
 
-        // Get the SpriteRenderer and store its original color
         if (playerSprite == null)
         {
             playerSprite = GetComponent<SpriteRenderer>();
@@ -36,13 +53,23 @@ public class PlayerHealth : MonoBehaviour
         originalColor = playerSprite != null ? playerSprite.color : Color.white;
     }
 
+    void OnDestroy()
+    {
+        if (playerInventory != null)
+        {
+            playerInventory.OnEquipmentChanged -= OnEquipmentChanged;
+        }
+    }
+
     public void TakeDamage(int damage)
     {
-        int damageTaken = Mathf.Max(damage - defense, 0);
+        int totalDefense = GetTotalDefense();
+        int damageTaken = Mathf.Max(damage - totalDefense, 0);
         currentHealth -= damageTaken;
-        Debug.Log($"Player took {damageTaken} damage! HP: {currentHealth}");
+        Debug.Log($"Player took {damageTaken} damage! HP: {currentHealth}/{CurrentMaxHealth}");
 
-        // Trigger the blink effect if damage is taken
+        PlayAttackParticleEffect();
+
         if (damageTaken > 0 && playerSprite != null)
         {
             StartCoroutine(BlinkRed());
@@ -50,7 +77,7 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            Debug.Log("Player died!");
+            Die();
         }
         UpdateHealthBar();
     }
@@ -58,33 +85,69 @@ public class PlayerHealth : MonoBehaviour
     public void GainHealth(int amount)
     {
         currentHealth += amount;
-        if (currentHealth > maxHealth) currentHealth = maxHealth;
+        if (currentHealth > CurrentMaxHealth)
+            currentHealth = CurrentMaxHealth;
         UpdateHealthBar();
-        Debug.Log($"Player gained {amount} health! HP: {currentHealth}");
+        Debug.Log($"Player gained {amount} health! HP: {currentHealth}/{CurrentMaxHealth}");
+    }
+
+    private void Die()
+    {
+        Debug.Log("Player died!");
+        OnPlayerDeath?.Invoke();
     }
 
     private void UpdateHealthBar()
     {
-        healthBar.value = (float)currentHealth / maxHealth;
+        healthBar.value = (float)currentHealth / CurrentMaxHealth;
         if (healthText != null)
         {
-            healthText.text = $"{currentHealth}/{maxHealth}";
+            healthText.text = $"{currentHealth}/{CurrentMaxHealth}";
         }
     }
 
     private IEnumerator BlinkRed()
     {
-        // Set sprite color to red
         playerSprite.color = Color.red;
-
-        // Wait for 0.3 seconds
         yield return new WaitForSeconds(0.3f);
-
-        // Revert to original color
         playerSprite.color = originalColor;
     }
 
-    public int GetAttack() => attack;
+    private void PlayAttackParticleEffect()
+    {
+        if (attackParticleEffect != null)
+        {
+            Instantiate(attackParticleEffect, transform.position, Quaternion.identity);
+        }
+    }
+
+    private void OnEquipmentChanged(ItemType type, Item item)
+    {
+        if (currentHealth > CurrentMaxHealth)
+        {
+            currentHealth = CurrentMaxHealth;
+        }
+        UpdateHealthBar();
+    }
+
+    // Stat getters
+    public int GetTotalAttack()
+    {
+        return baseAttack + (playerInventory?.equipment.GetTotalAttackBonus() ?? 0);
+    }
+
+    public int GetTotalDefense()
+    {
+        return baseDefense + (playerInventory?.equipment.GetTotalDefenseBonus() ?? 0);
+    }
+
+    public int CurrentMaxHealth
+    {
+        get { return baseMaxHealth + (playerInventory?.equipment.GetTotalHealthBonus() ?? 0); }
+    }
+
+    // Original getters for base stats (if needed elsewhere) commented, coz no need for now.
+    //public int GetBaseAttack() => baseAttack;
+    //public int GetBaseDefense() => baseDefense;
     public int GetHealth() => currentHealth;
-    public int GetDefense() => defense;
 }
